@@ -1,0 +1,38 @@
+{
+  "name": "issue-branch",
+  "version": "0.1.0",
+  "description": "GitHub Issue起点のブランチ作成CLIツール",
+  "type": "module",
+  "bin": {
+    "ib": "./dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "bun run tsc",
+    "dev": "bun run src/cli.tsx",
+    "prepublishOnly": "bun run build"
+  },
+  "keywords": [
+    "github",
+    "issue",
+    "branch",
+    "cli"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@inkjs/ui": "^2.0.0",
+    "fzf": "^0.5.2",
+    "ink": "^6.6.0",
+    "meow": "^14.0.0",
+    "react": "^19.2.4"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.13",
+    "typescript": "^5.9.3"
+  }
+}
