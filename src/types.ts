@@ -14,7 +14,8 @@ export type AppState =
   | { phase: "checking" }
   | { phase: "loading" }
   | { phase: "selecting"; issues: GitHubIssue[] }
-  | { phase: "creating"; issue: GitHubIssue; branchName: string }
+  | { phase: "confirming"; issue: GitHubIssue; defaultBranchName: string; baseBranch: string; issues: GitHubIssue[] }
+  | { phase: "creating"; issue: GitHubIssue; branchName: string; baseBranch: string }
   | { phase: "done"; branchName: string; alreadyExisted: boolean }
   | { phase: "error"; message: string };
 

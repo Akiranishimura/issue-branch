@@ -9,9 +9,10 @@ const VISIBLE_COUNT = 8;
 interface Props {
   issues: GitHubIssue[];
   onSelect: (issue: GitHubIssue) => void;
+  onCancel: () => void;
 }
 
-export function IssueSelector({ issues, onSelect }: Props) {
+export function IssueSelector({ issues, onSelect, onCancel }: Props) {
   const [query, setQuery] = useState("");
   const [cursor, setCursor] = useState(0);
 
@@ -34,6 +35,8 @@ export function IssueSelector({ issues, onSelect }: Props) {
       setCursor((prev) => Math.min(results.length - 1, prev + 1));
     } else if (key.return && results.length > 0) {
       onSelect(results[cursor]!.item);
+    } else if (key.escape) {
+      onCancel();
     }
   });
 
@@ -80,7 +83,7 @@ export function IssueSelector({ issues, onSelect }: Props) {
 
       <Box marginTop={1}>
         <Text dimColor>
-          {results.length} issues · ↑↓ select · Enter confirm
+          {results.length} issues · ↑↓ select · Enter confirm · Esc cancel
         </Text>
       </Box>
     </Box>

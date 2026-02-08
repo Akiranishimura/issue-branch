@@ -22,7 +22,7 @@ export async function checkPrerequisites(): Promise<PrerequisiteResult> {
     return {
       ok: false,
       message:
-        "gitリポジトリ内で実行してください。(git init もしくは git clone を先に実行)",
+        "Not a git repository. Run `git init` or `git clone` first.",
     };
   }
 
@@ -30,7 +30,7 @@ export async function checkPrerequisites(): Promise<PrerequisiteResult> {
     return {
       ok: false,
       message:
-        "gh CLI がインストールされていません。https://cli.github.com/ からインストールしてください。",
+        "gh CLI is not installed. Install it from https://cli.github.com/",
     };
   }
 
@@ -38,7 +38,7 @@ export async function checkPrerequisites(): Promise<PrerequisiteResult> {
     return {
       ok: false,
       message:
-        "gh CLI にログインしていません。`gh auth login` を実行してください。",
+        "Not logged in to gh CLI. Run `gh auth login` first.",
     };
   }
 

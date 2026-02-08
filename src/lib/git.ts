@@ -22,14 +22,22 @@ export interface CheckoutResult {
   alreadyExisted: boolean;
 }
 
+export async function getCurrentBranch(): Promise<string> {
+  const { stdout } = await execFileAsync("git", ["rev-parse", "--abbrev-ref", "HEAD"]);
+  return stdout.trim();
+}
+
 export async function createAndCheckoutBranch(
   name: string,
+  baseBranch?: string,
 ): Promise<CheckoutResult> {
   if (await branchExists(name)) {
     await execFileAsync("git", ["checkout", name]);
     return { branchName: name, alreadyExisted: true };
   }
 
-  await execFileAsync("git", ["checkout", "-b", name]);
+  const args = ["checkout", "-b", name];
+  if (baseBranch) args.push(baseBranch);
+  await execFileAsync("git", args);
   return { branchName: name, alreadyExisted: false };
 }
