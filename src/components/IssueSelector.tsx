@@ -1,6 +1,5 @@
 import { useState, useMemo } from "react";
 import { Box, Text, useInput } from "ink";
-import { TextInput } from "@inkjs/ui";
 import { Fzf, type FzfResultItem } from "fzf";
 import type { GitHubIssue } from "../types.js";
 
@@ -37,13 +36,14 @@ export function IssueSelector({ issues, onSelect, onCancel }: Props) {
       onSelect(results[cursor]!.item);
     } else if (key.escape) {
       onCancel();
+    } else if (key.backspace || key.delete) {
+      setQuery((prev) => prev.slice(0, -1));
+      setCursor(0);
+    } else if (input && !key.ctrl && !key.meta) {
+      setQuery((prev) => prev + input);
+      setCursor(0);
     }
   });
-
-  const handleChange = (value: string) => {
-    setQuery(value);
-    setCursor(0);
-  };
 
   const windowStart = Math.max(
     0,
@@ -55,7 +55,8 @@ export function IssueSelector({ issues, onSelect, onCancel }: Props) {
     <Box flexDirection="column">
       <Box marginBottom={1}>
         <Text bold>Search: </Text>
-        <TextInput placeholder="Type to filter issues..." onChange={handleChange} />
+        <Text>{query}</Text>
+        <Text dimColor>▌</Text>
       </Box>
 
       {results.length === 0 ? (

@@ -24,24 +24,19 @@ export function App({ flags, config }: Props) {
   const template = flags.template ?? config.branchTemplate;
 
   useEffect(() => {
-    if (state.phase !== "checking") return;
-
-    checkPrerequisites().then(async (result) => {
+    (async () => {
+      const result = await checkPrerequisites();
       if (!result.ok) {
         setState({ phase: "error", message: result.message! });
-      } else {
-        const branch = await getCurrentBranch();
-        setCurrentBranch(branch);
-        setState({ phase: "loading" });
+        return;
       }
-    });
-  }, [state.phase]);
 
-  useEffect(() => {
-    if (state.phase !== "loading") return;
+      const branch = await getCurrentBranch();
+      setCurrentBranch(branch);
+      setState({ phase: "loading" });
 
-    fetchIssues(flags.assignee, config.maxIssues)
-      .then((issues) => {
+      try {
+        const issues = await fetchIssues(flags.assignee, config.maxIssues);
         if (issues.length === 0) {
           setState({
             phase: "error",
@@ -50,28 +45,13 @@ export function App({ flags, config }: Props) {
         } else {
           setState({ phase: "selecting", issues });
         }
-      })
-      .catch((err: Error) => {
-        setState({ phase: "error", message: `Failed to fetch issues: ${err.message}` });
-      });
-  }, [state.phase, flags.assignee, config.maxIssues]);
+      } catch (err) {
+        setState({ phase: "error", message: `Failed to fetch issues: ${(err as Error).message}` });
+      }
+    })();
+  }, []);
 
-  useEffect(() => {
-    if (state.phase !== "creating") return;
-
-    createAndCheckoutBranch(state.branchName, state.baseBranch)
-      .then((result) => {
-        setState({
-          phase: "done",
-          branchName: result.branchName,
-          alreadyExisted: result.alreadyExisted,
-        });
-      })
-      .catch((err: Error) => {
-        setState({ phase: "error", message: `Failed to create branch: ${err.message}` });
-      });
-  }, [state.phase]);
-
+  // exit() はレンダー後に実行する必要があるため useEffect が必須
   useEffect(() => {
     if (state.phase === "done" || state.phase === "error") {
       exit();
@@ -84,9 +64,19 @@ export function App({ flags, config }: Props) {
     setState({ phase: "confirming", issue, defaultBranchName: branchName, baseBranch: currentBranch, issues });
   };
 
-  const handleConfirm = (branchName: string, baseBranch: string) => {
+  const handleConfirm = async (branchName: string, baseBranch: string) => {
     if (state.phase !== "confirming") return;
     setState({ phase: "creating", issue: state.issue, branchName, baseBranch });
+    try {
+      const result = await createAndCheckoutBranch(branchName, baseBranch);
+      setState({
+        phase: "done",
+        branchName: result.branchName,
+        alreadyExisted: result.alreadyExisted,
+      });
+    } catch (err) {
+      setState({ phase: "error", message: `Failed to create branch: ${(err as Error).message}` });
+    }
   };
 
   const handleCancel = () => {
