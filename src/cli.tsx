@@ -1,18 +1,29 @@
 #!/usr/bin/env node
 import meow from "meow";
 import { render } from "ink";
-import { loadConfig, initConfig } from "./lib/config.js";
+import { loadConfig, initConfig, getConfigPath } from "./lib/config.js";
 import { App } from "./app.js";
+
+const configPath = getConfigPath();
 
 const cli = meow(
   `
   Usage
-    $ ib            Select an issue and create a branch
-    $ ib init       Create config file
+    $ ib                Select an issue and create a branch
+    $ ib init           Create config file (~/.config/issue-branch/config.json)
+    $ ib help           Show this help message
 
   Options
-    --assignee, -a  Issue assignee (default: @me)
-    --template, -t  Branch name template (e.g. "feature/{number}-{title}")
+    --assignee, -a      Issue assignee (default: @me)
+    --template, -t      Branch name template
+
+  Template variables
+    {number}            Issue number
+    {title}             Issue title (kebab-cased)
+
+  Config (${configPath})
+    branchTemplate      Default branch template (default: "feature/{number}-{title}")
+    maxIssues           Max issues to fetch (default: 50)
 
   Examples
     $ ib
@@ -38,6 +49,10 @@ const cli = meow(
 
 const subcommand = cli.input[0];
 
+if (subcommand === "help") {
+  cli.showHelp(0);
+}
+
 if (subcommand === "init") {
   const { created, path } = await initConfig();
   if (created) {
@@ -46,6 +61,11 @@ if (subcommand === "init") {
     console.log(`Config already exists: ${path}`);
   }
   process.exit(0);
+}
+
+if (subcommand && !["init", "help"].includes(subcommand)) {
+  console.error(`Unknown command: ${subcommand}\n`);
+  cli.showHelp(1);
 }
 
 const config = await loadConfig();

@@ -27,6 +27,11 @@ export async function getCurrentBranch(): Promise<string> {
   return stdout.trim();
 }
 
+export async function getLocalBranches(): Promise<string[]> {
+  const { stdout } = await execFileAsync("git", ["branch", "--format=%(refname:short)"]);
+  return stdout.trim().split("\n").filter(Boolean);
+}
+
 export async function createAndCheckoutBranch(
   name: string,
   baseBranch?: string,

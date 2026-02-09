@@ -4,7 +4,7 @@ import type { AppState, CliFlags, Config, GitHubIssue } from "./types.js";
 import { checkPrerequisites } from "./lib/prerequisites.js";
 import { fetchIssues } from "./lib/github.js";
 import { generateBranchName } from "./lib/branch.js";
-import { createAndCheckoutBranch, getCurrentBranch } from "./lib/git.js";
+import { createAndCheckoutBranch, getCurrentBranch, getLocalBranches } from "./lib/git.js";
 import { LoadingIndicator } from "./components/LoadingIndicator.js";
 import { ErrorMessage } from "./components/ErrorMessage.js";
 import { SuccessMessage } from "./components/SuccessMessage.js";
@@ -20,6 +20,7 @@ export function App({ flags, config }: Props) {
   const { exit } = useApp();
   const [state, setState] = useState<AppState>({ phase: "checking" });
   const [currentBranch, setCurrentBranch] = useState("");
+  const [localBranches, setLocalBranches] = useState<string[]>([]);
 
   const template = flags.template ?? config.branchTemplate;
 
@@ -31,19 +32,24 @@ export function App({ flags, config }: Props) {
         return;
       }
 
-      const branch = await getCurrentBranch();
-      setCurrentBranch(branch);
+      // Run getCurrentBranch and fetchIssues in parallel
       setState({ phase: "loading" });
-
       try {
-        const issues = await fetchIssues(flags.assignee, config.maxIssues);
-        if (issues.length === 0) {
+        const [branch, fetchResult, branches] = await Promise.all([
+          getCurrentBranch(),
+          fetchIssues(flags.assignee, config.maxIssues),
+          getLocalBranches(),
+        ]);
+        setCurrentBranch(branch);
+        setLocalBranches(branches);
+
+        if (fetchResult.issues.length === 0) {
           setState({
             phase: "error",
             message: "No open issues assigned to you.",
           });
         } else {
-          setState({ phase: "selecting", issues });
+          setState({ phase: "selecting", issues: fetchResult.issues });
         }
       } catch (err) {
         setState({ phase: "error", message: `Failed to fetch issues: ${(err as Error).message}` });
@@ -97,6 +103,7 @@ export function App({ flags, config }: Props) {
           issue={state.issue}
           defaultBranchName={state.defaultBranchName}
           baseBranch={state.baseBranch}
+          branches={localBranches}
           onConfirm={handleConfirm}
           onCancel={handleCancel}
         />
